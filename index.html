@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  SISTEMA DE RH - POSIGRAF
+  Página: Inscrição Pública de Candidatos (inscricao.html)
+  ============================================================
+  Descrição:
+    Formulário público de inscrição para candidatos às vagas
+    disponíveis na Posigraf. Não requer autenticação.
+    Layout centralizado e focado na experiência do candidato.
+
+  Funcionalidades:
+    - Listagem dinâmica de vagas abertas
+    - Visualização de detalhes da vaga selecionada
+    - Upload de currículo em PDF (máx. 5MB)
+    - Indicação por colaborador com busca por e-mail
+    - Seleção dinâmica de formação acadêmica
+    - Validações de CPF duplicado e idade mínima (14 anos)
+
+  Dependências:
+    - inscricao.css : Estilos específicos da página pública
+    - supabase-js   : Cliente do banco de dados
+    - inscricao.js  : Lógica de inscrição
+  ============================================================
+-->
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inscreva-se — Posigraf</title>
+  <link rel="stylesheet" href="inscricao.css">
+</head>
+<body>
+
+  <!-- =====================================================
+       HEADER PÚBLICO — Identidade visual Posigraf
+  ===================================================== -->
+  <header class="inscricao-header">
+    <div class="inscricao-logo">
+      <div class="inscricao-logo-icon">🏭</div>
+      <div>
+        <span class="inscricao-logo-nome">Posigraf</span>
+        <span class="inscricao-logo-sub">Recursos Humanos</span>
+      </div>
+    </div>
+    <p class="inscricao-subtitulo">Candidate-se a uma de nossas vagas abertas</p>
+  </header>
+
+  <!-- =====================================================
+       CARTÃO DO FORMULÁRIO
+  ===================================================== -->
+  <div class="inscricao-card">
+
+    <!-- Dados Pessoais -->
+    <div class="secao-titulo">Dados Pessoais</div>
+    <div class="form-grid">
+
+      <div class="form-grupo full">
+        <label for="nome">Nome completo</label>
+        <input type="text" id="nome" placeholder="Seu nome completo">
+      </div>
+
+      <div class="form-grupo">
+        <label for="cpf">CPF</label>
+        <input type="text" id="cpf" placeholder="000.000.000-00">
+      </div>
+
+      <div class="form-grupo">
+        <label for="data_nascimento">Data de Nascimento</label>
+        <input type="date" id="data_nascimento">
+      </div>
+
+      <div class="form-grupo full">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" placeholder="seu@email.com">
+      </div>
+
+    </div>
+
+    <!-- Vaga de Interesse -->
+    <div class="secao-titulo">Vaga de Interesse</div>
+    <div class="form-grid">
+
+      <div class="form-grupo full">
+        <label for="vaga">Selecione a Vaga</label>
+        <select id="vaga" onchange="mostrarInfoVaga()"></select>
+      </div>
+
+      <!-- Detalhes da vaga selecionada -->
+      <div class="full">
+        <div id="infoVaga"></div>
+      </div>
+
+    </div>
+
+    <!-- Origem / Como soube da vaga -->
+    <div class="secao-titulo">Como Soube da Vaga?</div>
+    <div class="form-grid">
+
+      <div class="form-grupo full">
+        <label for="origem">Origem</label>
+        <select id="origem" onchange="verificarOrigem()">
+          <option value="linkedin">LinkedIn</option>
+          <option value="indeed">Indeed</option>
+          <option value="github">GitHub</option>
+          <option value="gupy">Gupy</option>
+          <option value="site">Site da empresa</option>
+          <option value="indicacao">Indicação de colaborador</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+
+      <!-- Campos de indicação (condicionais) -->
+      <div id="indicacaoFields" class="campo-condicional full">
+        <div class="form-grid" style="margin:0;">
+          <div class="form-grupo">
+            <label for="email_indicador">E-mail corporativo do indicador</label>
+            <input type="email" id="email_indicador"
+              placeholder="colaborador@posigraf.com.br"
+              onchange="buscarIndicador()">
+          </div>
+          <div class="form-grupo">
+            <label for="quem_indicou">Nome do colaborador</label>
+            <input type="text" id="quem_indicou"
+              placeholder="Preenchido automaticamente" readonly>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Formação Acadêmica -->
+    <div class="secao-titulo">Formação Acadêmica</div>
+    <div class="form-grid">
+
+      <div class="form-grupo full">
+        <label for="tipo_formacao">Nível de Formação</label>
+        <select id="tipo_formacao">
+          <option value="sem_formacao" selected>Sem Formação</option>
+          <option value="ensino_medio">Ensino Médio</option>
+          <option value="ensino_medio_integrado">Ensino Médio Integrado</option>
+          <option value="curso_tecnico">Curso Técnico</option>
+          <option value="graduacao">Graduação</option>
+          <option value="pos_graduacao">Pós-Graduação</option>
+        </select>
+      </div>
+
+      <!-- Campos de detalhes da formação (condicionais) -->
+      <div id="camposFormacaoDetalhes" class="campo-condicional full">
+        <div class="form-grid" style="margin:0;">
+          <div class="form-grupo">
+            <label for="tipo_instituicao">Tipo de Instituição</label>
+            <select id="tipo_instituicao">
+              <option value="">Selecione</option>
+            </select>
+          </div>
+          <div class="form-grupo">
+            <label for="instituicao">Nome da Instituição</label>
+            <input type="text" id="instituicao" placeholder="Ex: UTFPR, SENAI">
+          </div>
+          <div class="form-grupo full">
+            <label for="curso">Curso</label>
+            <input type="text" id="curso" placeholder="Ex: Análise e Desenvolvimento de Sistemas">
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Currículo -->
+    <div class="secao-titulo">Currículo</div>
+    <div class="form-grid">
+      <div class="form-grupo full">
+        <label for="curriculo">Arquivo PDF (máximo 5MB — opcional)</label>
+        <input type="file" id="curriculo" accept=".pdf">
+      </div>
+    </div>
+
+    <!-- Botão de envio -->
+    <button class="btn-enviar" onclick="inscrever()">
+      🚀 Enviar Inscrição
+    </button>
+
+  </div>
+
+  <!-- Rodapé público -->
+  <p class="inscricao-footer">
+    © 2025 Posigraf · Sistema de Recrutamento e Seleção
+  </p>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="inscricao.js"></script>
+
+  <script>
+    /**
+     * Controladores de visibilidade dos campos condicionais.
+     * Utiliza a classe CSS .visivel em vez de inline display:block/none
+     * para manter a separação entre lógica e apresentação.
+     */
+
+    // Campos de indicação aparecem quando origem === 'indicacao'
+    document.getElementById('origem').addEventListener('change', function() {
+      document.getElementById('indicacaoFields')
+        .classList.toggle('visivel', this.value === 'indicacao');
+    });
+
+    // Campos de formação aparecem quando tipo_formacao !== 'sem_formacao'
+    document.getElementById('tipo_formacao').addEventListener('change', function() {
+      document.getElementById('camposFormacaoDetalhes')
+        .classList.toggle('visivel', this.value !== 'sem_formacao');
+    });
+  </script>
+</body>
+</html>
